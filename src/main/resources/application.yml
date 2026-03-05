@@ -1,0 +1,24 @@
+server:
+  # 服务启动端口，默认是8080，为了避免冲突可以改一下
+  port: 8081
+
+spring:
+  application:
+    name: NexusMart-Seckill
+  datasource:
+    # MySQL 8.0 及以上的标准驱动类名
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 本地开发常用参数：关闭 SSL + 允许公钥检索，避免 MySQL8 默认认证导致连接失败
+    url: jdbc:mysql://127.0.0.1:3306/nexusmart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+
+# MyBatis 配置
+mybatis:
+  # 如果后续写 XML Mapper 文件，放在 resources/mapper/ 目录下即可自动扫描
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    # 开启驼峰命名自动映射：数据库 goods_name -> Java goodsName
+    map-underscore-to-camel-case: true
+    # 打印 SQL 日志，方便开发调试（上线时改为 WARN 或去掉）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

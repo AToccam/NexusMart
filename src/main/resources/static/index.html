@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMart 秒杀</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f5f5; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 20px; color: #333; }
+        .user-bar { text-align: center; margin-bottom: 24px; }
+        .user-bar label { font-size: 15px; margin-right: 8px; }
+        .user-bar input { width: 120px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .goods-list { max-width: 800px; margin: 0 auto; }
+        .goods-card {
+            background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .goods-info h3 { margin-bottom: 6px; color: #222; }
+        .goods-info p { color: #888; font-size: 14px; }
+        .price-original { text-decoration: line-through; color: #999; margin-right: 10px; }
+        .price-seckill { color: #e4393c; font-size: 20px; font-weight: bold; }
+        .stock { color: #52c41a; font-size: 13px; margin-top: 4px; }
+        .stock.empty { color: #999; }
+        .btn-seckill {
+            padding: 10px 28px; background: #e4393c; color: #fff; border: none;
+            border-radius: 4px; font-size: 15px; cursor: pointer; white-space: nowrap;
+        }
+        .btn-seckill:hover { background: #c1272d; }
+        .btn-seckill:disabled { background: #ccc; cursor: not-allowed; }
+        .result-box {
+            max-width: 800px; margin: 20px auto; padding: 16px; border-radius: 8px;
+            display: none; font-size: 14px;
+        }
+        .result-box.success { display: block; background: #f6ffed; border: 1px solid #b7eb8f; color: #135200; }
+        .result-box.error { display: block; background: #fff2f0; border: 1px solid #ffccc7; color: #a8071a; }
+        .empty-tip { text-align: center; color: #999; padding: 40px 0; }
+    </style>
+</head>
+<body>
+
+<h1>🛒 NexusMart 秒杀商城</h1>
+
+<div class="user-bar">
+    <label>用户 ID：</label>
+    <input id="userId" type="number" value="1001" min="1" placeholder="请输入用户ID">
+</div>
+
+<div id="resultBox" class="result-box"></div>
+<div id="goodsList" class="goods-list">
+    <p class="empty-tip">加载中…</p>
+</div>
+
+<script>
+    const API_BASE = '';
+
+    // 加载商品列表
+    async function loadGoods() {
+        const container = document.getElementById('goodsList');
+        try {
+            const resp = await fetch(API_BASE + '/api/goods/seckill/list');
+            const result = await resp.json();
+            if (result.code !== 200 || !result.data || result.data.length === 0) {
+                container.innerHTML = '<p class="empty-tip">暂无正在进行的秒杀商品</p>';
+                return;
+            }
+            container.innerHTML = result.data.map(g => `
+                <div class="goods-card">
+                    <div class="goods-info">
+                        <h3>${escapeHtml(g.goodsName)}</h3>
+                        <p>
+                            <span class="price-original">¥${g.goodsPrice}</span>
+                            <span class="price-seckill">¥${g.seckillPrice}</span>
+                        </p>
+                        <p class="stock ${g.stockCount <= 0 ? 'empty' : ''}">
+                            剩余库存：${g.stockCount}
+                        </p>
+                    </div>
+                    <button class="btn-seckill" onclick="doSeckill(${g.seckillId})"
+                            ${g.stockCount <= 0 ? 'disabled' : ''}>
+                        ${g.stockCount <= 0 ? '已售罄' : '立即抢购'}
+                    </button>
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '<p class="empty-tip">加载失败，请检查后端服务是否启动</p>';
+        }
+    }
+
+    // 执行秒杀
+    async function doSeckill(seckillId) {
+        const userId = document.getElementById('userId').value;
+        if (!userId) { alert('请输入用户 ID'); return; }
+
+        const box = document.getElementById('resultBox');
+        box.className = 'result-box';
+        box.style.display = 'none';
+
+        try {
+            const resp = await fetch(API_BASE + '/api/seckill/do', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `userId=${encodeURIComponent(userId)}&seckillId=${encodeURIComponent(seckillId)}`
+            });
+            const result = await resp.json();
+            if (result.code === 200) {
+                box.className = 'result-box success';
+                box.innerHTML = `✅ 秒杀成功！订单号：${result.data.id}，商品：${escapeHtml(result.data.goodsName)}，成交价：¥${result.data.orderPrice}`;
+                loadGoods(); // 刷新库存
+            } else {
+                box.className = 'result-box error';
+                box.textContent = '❌ ' + result.msg;
+            }
+        } catch (e) {
+            box.className = 'result-box error';
+            box.textContent = '❌ 请求失败：' + e.message;
+        }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str || ''));
+        return div.innerHTML;
+    }
+
+    loadGoods();
+</script>
+</body>
+</html>

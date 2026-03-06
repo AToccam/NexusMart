@@ -13,6 +13,14 @@ spring:
     username: root
     password: 123456
 
+  # Redis 配置
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password:        # 无密码则留空
+      database: 0
+
 # MyBatis 配置
 mybatis:
   # 如果后续写 XML Mapper 文件，放在 resources/mapper/ 目录下即可自动扫描

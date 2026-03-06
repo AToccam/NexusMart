@@ -82,6 +82,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- Test starter (managed by parent) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

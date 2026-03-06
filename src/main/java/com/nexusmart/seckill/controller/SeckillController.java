@@ -2,9 +2,12 @@ package com.nexusmart.seckill.controller;
 
 import com.nexusmart.seckill.common.Result;
 import com.nexusmart.seckill.entity.OrderInfo;
+import com.nexusmart.seckill.mapper.OrderInfoMapper;
 import com.nexusmart.seckill.service.SeckillService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/seckill")
@@ -12,6 +15,9 @@ public class SeckillController {
 
     @Autowired
     private SeckillService seckillService;
+
+    @Autowired
+    private OrderInfoMapper orderInfoMapper;
 
     /**
      * 执行秒杀
@@ -27,5 +33,11 @@ public class SeckillController {
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    /** 查询某个用户的所有订单 */
+    @GetMapping("/orders")
+    public Result<List<OrderInfo>> listOrders(@RequestParam Long userId) {
+        return Result.success(orderInfoMapper.selectByUserId(userId));
     }
 }

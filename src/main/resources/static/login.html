@@ -40,8 +40,8 @@
     <!-- 登录表单 -->
     <div id="loginForm">
         <div class="form-group">
-            <label>用户 ID</label>
-            <input id="loginId" type="number" placeholder="请输入您的用户 ID" min="1">
+            <label>用户 ID 或用户名</label>
+            <input id="loginAccount" type="text" placeholder="请输入用户 ID 或用户名">
         </div>
         <div class="form-group">
             <label>密码</label>
@@ -55,7 +55,7 @@
     <!-- 注册表单 -->
     <div id="registerForm" style="display:none;">
         <div class="form-group">
-            <label>昵称</label>
+            <label>用户名（不能为纯数字）</label>
             <input id="regNick" type="text" placeholder="给自己取个名字" maxlength="50">
         </div>
         <div class="form-group">
@@ -85,18 +85,18 @@
     }
 
     async function doLogin() {
-        const id = document.getElementById('loginId').value.trim();
+        const account = document.getElementById('loginAccount').value.trim();
         const pwd = document.getElementById('loginPwd').value;
         const msg = document.getElementById('loginMsg');
 
-        if (!id) { showMsg(msg, '请输入用户 ID', 'error'); return; }
+        if (!account) { showMsg(msg, '请输入用户 ID 或用户名', 'error'); return; }
         if (!pwd) { showMsg(msg, '请输入密码', 'error'); return; }
 
         try {
             const resp = await fetch(API_BASE + '/api/user/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `id=${encodeURIComponent(id)}&password=${encodeURIComponent(pwd)}`
+                body: `account=${encodeURIComponent(account)}&password=${encodeURIComponent(pwd)}`
             });
             const result = await resp.json();
             if (result.code === 200) {
@@ -119,7 +119,8 @@
         const pwd2 = document.getElementById('regPwd2').value;
         const msg = document.getElementById('regMsg');
 
-        if (!nick) { showMsg(msg, '请输入昵称', 'error'); return; }
+        if (!nick) { showMsg(msg, '请输入用户名', 'error'); return; }
+        if (/^\d+$/.test(nick)) { showMsg(msg, '用户名不能为纯数字', 'error'); return; }
         if (!pwd || pwd.length < 6) { showMsg(msg, '密码长度不能少于6位', 'error'); return; }
         if (pwd !== pwd2) { showMsg(msg, '两次密码输入不一致', 'error'); return; }
 
@@ -132,7 +133,7 @@
             const result = await resp.json();
             if (result.code === 200) {
                 showMsg(msg,
-                    `🎉 注册成功！您的用户 ID 是：<span class="success-id">${result.data.id}</span><br>请牢记此 ID 用于登录`,
+                    `🎉 注册成功！您的用户 ID 是：<span class="success-id">${result.data.id}</span><br>可使用 ID 或用户名登录`,
                     'success');
             } else {
                 showMsg(msg, result.msg, 'error');
@@ -148,6 +149,7 @@
     }
 
     // 回车触发
+    document.getElementById('loginAccount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPwd').focus(); });
     document.getElementById('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
     document.getElementById('regPwd2').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
 </script>

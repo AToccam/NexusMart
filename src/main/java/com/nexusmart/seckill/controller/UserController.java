@@ -13,12 +13,12 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /** ID + 密码登录 */
+    /** 登录：account 可以是用户 ID 或用户名 */
     @PostMapping("/login")
-    public Result<UserInfo> login(@RequestParam Long id,
+    public Result<UserInfo> login(@RequestParam String account,
                                   @RequestParam String password) {
         try {
-            UserInfo user = userService.login(id, password);
+            UserInfo user = userService.login(account, password);
             // 不返回敏感字段
             user.setPassword(null);
             user.setSalt(null);

@@ -19,10 +19,19 @@ public class UserService {
     private final SecureRandom random = new SecureRandom();
 
     /**
-     * 用 ID + 密码登录
+     * 登录：支持 ID 或用户名 + 密码
+     * @param account 用户输入的账号（可能是数字 ID 或用户名）
      */
-    public UserInfo login(Long id, String password) {
-        UserInfo user = userInfoMapper.selectById(id);
+    public UserInfo login(String account, String password) {
+        UserInfo user = null;
+        // 如果输入的是纯数字，优先按 ID 查询
+        if (account.matches("\\d+")) {
+            user = userInfoMapper.selectById(Long.parseLong(account));
+        }
+        // ID 未找到或输入的不是纯数字，按用户名查询
+        if (user == null) {
+            user = userInfoMapper.selectByNickname(account);
+        }
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
@@ -38,10 +47,21 @@ public class UserService {
      */
     public UserInfo register(String nickname, String password) {
         if (nickname == null || nickname.isBlank()) {
-            throw new RuntimeException("昵称不能为空");
+            throw new RuntimeException("用户名不能为空");
+        }
+        // 用户名不能为纯数字（避免与 ID 混淆）
+        if (nickname.matches("\\d+")) {
+            throw new RuntimeException("用户名不能为纯数字");
+        }
+        if (nickname.length() > 50) {
+            throw new RuntimeException("用户名长度不能超过50");
         }
         if (password == null || password.length() < 6) {
             throw new RuntimeException("密码长度不能少于6位");
+        }
+        // 用户名唯一校验
+        if (userInfoMapper.selectByNickname(nickname) != null) {
+            throw new RuntimeException("该用户名已被占用");
         }
 
         // 生成随机盐（6位十六进制）

@@ -77,8 +77,8 @@
 <h1>🛒 NexusMart 秒杀商城</h1>
 
 <div class="user-bar">
-    <label>用户 ID：</label>
-    <input id="userId" type="number" value="1001" min="1" placeholder="请输入用户ID">
+    <span id="userGreeting"></span>
+    <button id="logoutBtn" onclick="doLogout()" style="margin-left:12px;padding:4px 14px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">退出登录</button>
 </div>
 
 <div class="tab-bar">
@@ -101,6 +101,23 @@
 
 <script>
     const API_BASE = '';
+
+    // 登录状态检查
+    const currentUserId = sessionStorage.getItem('userId');
+    const currentNickname = sessionStorage.getItem('nickname');
+    if (!currentUserId) {
+        window.location.href = 'login.html';
+    }
+    document.getElementById('userGreeting').textContent = '👤 ' + (currentNickname || '') + '（ID: ' + currentUserId + '）';
+
+    function doLogout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    function getUserId() {
+        return currentUserId;
+    }
 
     // 加载商品列表
     async function loadGoods() {
@@ -137,8 +154,7 @@
 
     // 执行秒杀
     async function doSeckill(seckillId) {
-        const userId = document.getElementById('userId').value;
-        if (!userId) { alert('请输入用户 ID'); return; }
+        const userId = getUserId();
 
         const box = document.getElementById('resultBox');
         box.className = 'result-box';
@@ -184,9 +200,8 @@
 
     // 加载订单列表
     async function loadOrders() {
-        const userId = document.getElementById('userId').value;
+        const userId = getUserId();
         const container = document.getElementById('ordersList');
-        if (!userId) { container.innerHTML = '<p class="empty-tip">请先输入用户 ID</p>'; return; }
         container.innerHTML = '<p class="empty-tip">加载中…</p>';
         try {
             const resp = await fetch(API_BASE + '/api/seckill/orders?userId=' + encodeURIComponent(userId));

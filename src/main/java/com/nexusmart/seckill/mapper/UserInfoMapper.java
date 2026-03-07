@@ -17,9 +17,14 @@ public interface UserInfoMapper {
     @Select("SELECT * FROM user_info WHERE nickname = #{nickname}")
     UserInfo selectByNickname(String nickname);
 
-    /** 新增用户（注册） */
+    /** 新增用户（注册，自动分配 ID） */
     @Insert("INSERT INTO user_info(nickname, password, salt) " +
             "VALUES(#{nickname}, #{password}, #{salt})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(UserInfo userInfo);
+
+    /** 新增用户（指定 ID 注册） */
+    @Insert("INSERT INTO user_info(id, nickname, password, salt) " +
+            "VALUES(#{id}, #{nickname}, #{password}, #{salt})")
+    int insertWithId(UserInfo userInfo);
 }

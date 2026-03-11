@@ -19,7 +19,7 @@
 | 字段名 | 数据类型 | 约束 | 默认值 | 描述说明 |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | bigint(20) | PK, AUTO_INCREMENT | - | 用户全局唯一ID |
-| `nickname` | varchar(255) | NOT NULL | - | 用户昵称 |
+| `nickname` | varchar(255) | NOT NULL, UNIQUE | - | 用户昵称（唯一索引 `uk_nickname` 防重名） |
 | `password` | varchar(32) | - | NULL | MD5加密后的密码密文 |
 | `salt` | varchar(10) | - | NULL | 随机密码盐，用于保障数据安全 |
 | `register_time` | datetime | - | CURRENT_TIMESTAMP | 账号注册时间 |

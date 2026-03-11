@@ -15,9 +15,9 @@ spring:
     # MySQL 8.0 及以上的标准驱动类名
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 本地开发常用参数：关闭 SSL + 允许公钥检索，避免 MySQL8 默认认证导致连接失败
-    url: jdbc:mysql://127.0.0.1:3306/nexusmart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/nexusmart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:123456}
     hikari:
       maximum-pool-size: 100     # 最大连接数（默认10，远不够高并发）
       minimum-idle: 20           # 最小空闲连接数
@@ -28,9 +28,9 @@ spring:
   # Redis 配置
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
-      password:        # 无密码则留空
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}  # 无密码则留空
       database: 0
       lettuce:
         pool:

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nexusmart.seckill.entity.SeckillGoods;
 import com.nexusmart.seckill.mapper.SeckillGoodsMapper;
+import com.nexusmart.seckill.service.GoodsService;
 import com.nexusmart.seckill.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 应用启动时，将秒杀商品库存 + 商品详情预热到 Redis
+ * 应用启动时，将秒杀商品库存 + 商品详情 + 商品列表预热到 Redis
  */
 @Component
 public class SeckillInitRunner implements ApplicationRunner {
@@ -35,6 +36,9 @@ public class SeckillInitRunner implements ApplicationRunner {
     @Autowired
     private RedisCacheUtil cacheUtil;
 
+    @Autowired
+    private GoodsService goodsService;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
         List<SeckillGoods> list = seckillGoodsMapper.selectOngoing();
@@ -49,6 +53,10 @@ public class SeckillInitRunner implements ApplicationRunner {
             cacheUtil.setWithRandomTTL(
                     GOODS_KEY_PREFIX + sg.getId(), json, 3600, 600);
         }
-        System.out.println("========== Redis 秒杀库存 & 商品详情预热完成，共 " + list.size() + " 个商品 ==========");
+
+        // 启动时主动调用一次列表查询，强行触发列表缓存的生成
+        goodsService.listSeckillGoods();
+
+        System.out.println("========== Redis 秒杀库存、商品详情及列表预热完成，共 " + list.size() + " 个商品 ==========");
     }
 }

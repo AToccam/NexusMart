@@ -1,6 +1,12 @@
 server:
   # 服务启动端口，默认是8080，为了避免冲突可以改一下
   port: 8081
+  tomcat:
+    threads:
+      max: 800         # 最大工作线程数（默认200，高并发场景需加大）
+      min-spare: 100   # 最小空闲线程数（默认10）
+    max-connections: 10000  # 最大连接数（默认8192）
+    accept-count: 1000      # 等待队列长度（默认100）
 
 spring:
   application:
@@ -12,6 +18,12 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/nexusmart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 123456
+    hikari:
+      maximum-pool-size: 100     # 最大连接数（默认10，远不够高并发）
+      minimum-idle: 20           # 最小空闲连接数
+      connection-timeout: 10000  # 获取连接超时（毫秒），默认30000
+      idle-timeout: 300000       # 空闲连接最大存活时间
+      max-lifetime: 600000       # 连接最大生命周期
 
   # Redis 配置
   data:
@@ -20,6 +32,12 @@ spring:
       port: 6379
       password:        # 无密码则留空
       database: 0
+      lettuce:
+        pool:
+          max-active: 200   # 最大活跃连接数（默认8）
+          max-idle: 50      # 最大空闲连接数
+          min-idle: 10      # 最小空闲连接数
+          max-wait: 5000ms  # 获取连接最大等待时间
 
 # MyBatis 配置
 mybatis:

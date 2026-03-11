@@ -88,6 +88,12 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- Lettuce 连接池需要 commons-pool2 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+
         <!-- Test starter (managed by parent) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

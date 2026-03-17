@@ -5,6 +5,7 @@ import com.nexusmart.seckill.service.GoodsService;
 import com.nexusmart.seckill.vo.SeckillGoodsVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,5 +22,15 @@ public class GoodsController {
     @GetMapping("/seckill/list")
     public Result<List<SeckillGoodsVo>> listSeckillGoods() {
         return Result.success(goodsService.listSeckillGoods());
+    }
+
+    /** 获取商品详情（带缓存防护） */
+    @GetMapping("/detail")
+    public Result<SeckillGoodsVo> getGoodsDetail(@RequestParam Long goodsId) {
+        SeckillGoodsVo detail = goodsService.getGoodsDetail(goodsId);
+        if (detail == null) {
+            return Result.error("商品不存在");
+        }
+        return Result.success(detail);
     }
 }

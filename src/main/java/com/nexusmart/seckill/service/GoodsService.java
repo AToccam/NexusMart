@@ -22,6 +22,8 @@ public class GoodsService {
 
     public static final String SECKILL_LIST_KEY = "seckill:goods:list";
     private static final String SECKILL_LIST_LOCK = "seckill:goods:list";
+    public static final String GOODS_DETAIL_KEY_PREFIX = "seckill:goods:detail:";
+    private static final String GOODS_DETAIL_LOCK_PREFIX = "seckill:goods:detail:";
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule());
@@ -56,6 +58,30 @@ public class GoodsService {
     }
 
     /**
+     * 查询商品详情（优先走 Redis 缓存，防击穿/穿透/雪崩）
+     */
+    public SeckillGoodsVo getGoodsDetail(Long goodsId) {
+        String key = GOODS_DETAIL_KEY_PREFIX + goodsId;
+        String lockName = GOODS_DETAIL_LOCK_PREFIX + goodsId;
+
+        String json = cacheUtil.getWithMutex(
+                key,
+                lockName,
+                () -> loadGoodsDetailFromDb(goodsId),
+                1800, 300); // 基础 TTL 1800s + 随机 0~300s
+
+        if (json == null) {
+            return null;
+        }
+
+        try {
+            return MAPPER.readValue(json, SeckillGoodsVo.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("反序列化商品详情失败", e);
+        }
+    }
+
+    /**
      * 从 DB 加载秒杀商品列表（仅在缓存未命中时由 getWithMutex 回调）
      */
     private String loadSeckillGoodsFromDb() {
@@ -84,6 +110,38 @@ public class GoodsService {
             return MAPPER.writeValueAsString(voList);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("序列化秒杀商品列表失败", e);
+        }
+    }
+
+    /**
+     * 从 DB 加载商品详情（仅在缓存未命中时由 getWithMutex 回调）
+     */
+    private String loadGoodsDetailFromDb(Long goodsId) {
+        Goods goods = goodsMapper.selectById(goodsId);
+        if (goods == null) {
+            return null;
+        }
+
+        SeckillGoods sg = seckillGoodsMapper.selectByGoodsId(goodsId);
+
+        SeckillGoodsVo vo = new SeckillGoodsVo();
+        vo.setGoodsId(goods.getId());
+        vo.setGoodsName(goods.getGoodsName());
+        vo.setGoodsImg(goods.getGoodsImg());
+        vo.setGoodsPrice(goods.getGoodsPrice());
+
+        if (sg != null) {
+            vo.setSeckillId(sg.getId());
+            vo.setSeckillPrice(sg.getSeckillPrice());
+            vo.setStockCount(sg.getStockCount());
+            vo.setStartTime(sg.getStartTime());
+            vo.setEndTime(sg.getEndTime());
+        }
+
+        try {
+            return MAPPER.writeValueAsString(vo);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("序列化商品详情失败", e);
         }
     }
 }

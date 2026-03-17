@@ -1,22 +1,25 @@
-version: "3.8"
-
 services:
-  # ==================== MySQL ====================
-  mysql:
+  # ==================== MySQL Master ====================
+  mysql-master:
     image: mysql:8.0
-    container_name: nexusmart-mysql
+    container_name: nexusmart-mysql-master
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: nexusmart
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      # 如有初始化 SQL 脚本，放在 ./sql/ 目录下会自动执行
-      # - ./sql:/docker-entrypoint-initdb.d
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      - mysql_master_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
     networks:
       - nexusmart-net
     healthcheck:
@@ -24,6 +27,98 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # 为主库创建复制账号
+  mysql-master-init:
+    image: mysql:8.0
+    container_name: nexusmart-mysql-master-init
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - nexusmart-net
+    command: >
+      sh -c "
+      until mysql -h mysql-master -uroot -p123456 -e 'SELECT 1' >/dev/null 2>&1; do
+        echo 'waiting mysql-master...';
+        sleep 2;
+      done;
+      mysql -h mysql-master -uroot -p123456 -e \"
+        CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED WITH mysql_native_password BY 'repl123';
+        GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'repl'@'%';
+        FLUSH PRIVILEGES;
+      \";
+      echo 'mysql-master replication user ready.';
+      "
+
+  # ==================== MySQL Slave (Read Replica) ====================
+  mysql-slave:
+    image: mysql:8.0
+    container_name: nexusmart-mysql-slave
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_slave_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --server-id=2
+      --relay-log=relay-bin
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --skip-replica-start=1
+    networks:
+      - nexusmart-net
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+      mysql-master-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 自动在从库执行 CHANGE REPLICATION SOURCE TO + START REPLICA
+  mysql-slave-init:
+    image: mysql:8.0
+    container_name: nexusmart-mysql-slave-init
+    depends_on:
+      mysql-slave:
+        condition: service_healthy
+      mysql-master-init:
+        condition: service_completed_successfully
+    restart: "no"
+    networks:
+      - nexusmart-net
+    command: >
+      sh -c "
+      until mysql -h mysql-slave -uroot -p123456 -e 'SELECT 1' >/dev/null 2>&1; do
+        echo 'waiting mysql-slave...';
+        sleep 2;
+      done;
+      mysql -h mysql-slave -uroot -p123456 -e \"
+        STOP REPLICA;
+        RESET REPLICA ALL;
+        CHANGE REPLICATION SOURCE TO
+          SOURCE_HOST='mysql-master',
+          SOURCE_PORT=3306,
+          SOURCE_USER='repl',
+          SOURCE_PASSWORD='repl123',
+          SOURCE_AUTO_POSITION=1,
+          GET_SOURCE_PUBLIC_KEY=1;
+        START REPLICA;
+        SET GLOBAL read_only=ON;
+        SET GLOBAL super_read_only=ON;
+      \";
+      echo 'mysql-slave replication started.';
+      "
 
   # ==================== Redis ====================
   redis:
@@ -51,7 +146,7 @@ services:
     container_name: nexusmart-app
     restart: unless-stopped
     environment:
-      DB_HOST: mysql
+      DB_HOST: mysql-master
       DB_PORT: 3306
       DB_USER: root
       DB_PASSWORD: 123456
@@ -63,8 +158,12 @@ services:
     networks:
       - nexusmart-net
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
+      mysql-slave:
+        condition: service_healthy
+      mysql-slave-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -88,5 +187,6 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+  mysql_master_data:
+  mysql_slave_data:
   redis_data:

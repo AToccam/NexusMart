@@ -8,6 +8,7 @@ import com.nexusmart.seckill.entity.Goods;
 import com.nexusmart.seckill.entity.SeckillGoods;
 import com.nexusmart.seckill.mapper.GoodsMapper;
 import com.nexusmart.seckill.mapper.SeckillGoodsMapper;
+import com.nexusmart.seckill.config.datasource.ReadOnlyDataSource;
 import com.nexusmart.seckill.util.RedisCacheUtil;
 import com.nexusmart.seckill.vo.SeckillGoodsVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Service
+@ReadOnlyDataSource
 public class GoodsService {
 
     public static final String SECKILL_LIST_KEY = "seckill:goods:list";

@@ -147,6 +147,10 @@ services:
     restart: unless-stopped
     environment:
       DB_HOST: mysql-master
+      DB_MASTER_HOST: mysql-master
+      DB_MASTER_PORT: 3306
+      DB_SLAVE_HOST: mysql-slave
+      DB_SLAVE_PORT: 3306
       DB_PORT: 3306
       DB_USER: root
       DB_PASSWORD: 123456

@@ -1,5 +1,7 @@
 package com.nexusmart.seckill.service;
 
+import com.nexusmart.seckill.config.datasource.ReadOnlyDataSource;
+import com.nexusmart.seckill.config.datasource.WriteDataSource;
 import com.nexusmart.seckill.entity.UserInfo;
 import com.nexusmart.seckill.mapper.UserInfoMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,7 @@ public class UserService {
      * 登录：支持 ID 或用户名 + 密码
      * @param account 用户输入的账号（可能是数字 ID 或用户名）
      */
+    @ReadOnlyDataSource
     public UserInfo login(String account, String password) {
         UserInfo user = null;
         // 如果输入的是纯数字，优先按 ID 查询
@@ -45,6 +48,7 @@ public class UserService {
     /**
      * 注册：随机分配一个未占用的 ID，存入加盐 MD5 密码
      */
+    @WriteDataSource
     public UserInfo register(String nickname, String password) {
         if (nickname == null || nickname.isBlank()) {
             throw new RuntimeException("用户名不能为空");

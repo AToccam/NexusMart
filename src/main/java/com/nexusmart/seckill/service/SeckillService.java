@@ -2,6 +2,7 @@ package com.nexusmart.seckill.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nexusmart.seckill.config.datasource.WriteDataSource;
 import com.nexusmart.seckill.config.SeckillInitRunner;
 import com.nexusmart.seckill.entity.*;
 import com.nexusmart.seckill.mapper.*;
@@ -43,6 +44,7 @@ public class SeckillService {
      * @return 生成的订单信息
      */
     @Transactional
+    @WriteDataSource
     public OrderInfo doSeckill(Long userId, Long seckillId) {
 
         // ====== 第一层：Redis 缓存查询秒杀商品（防穿透 + 防击穿 + 防雪崩） ======

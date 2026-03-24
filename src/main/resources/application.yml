@@ -48,3 +48,26 @@ mybatis:
     map-underscore-to-camel-case: true
     # 打印 SQL 日志，方便开发调试（上线时改为 WARN 或去掉）
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+app:
+  datasource:
+    master:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://${DB_MASTER_HOST:127.0.0.1}:${DB_MASTER_PORT:3307}/nexusmart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${DB_USER:root}
+      password: ${DB_PASSWORD:123456}
+      maximum-pool-size: 60
+      minimum-idle: 10
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 600000
+    slave:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://${DB_SLAVE_HOST:127.0.0.1}:${DB_SLAVE_PORT:3308}/nexusmart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${DB_USER:root}
+      password: ${DB_PASSWORD:123456}
+      maximum-pool-size: 60
+      minimum-idle: 10
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 600000

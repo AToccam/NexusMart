@@ -209,7 +209,7 @@
             if (result.code !== 200 || !result.data || result.data.length === 0) {
                 container.innerHTML = '<p class="empty-tip">暂无订单</p>'; return;
             }
-            const statusMap = { 0: '未支付', 1: '已支付', 2: '已发货', 3: '已退款' };
+            const statusMap = { 0: '排队中', 1: '成功', 2: '失败' };
             container.innerHTML = result.data.map(o => `
                 <div class="order-card">
                     <div class="order-info">

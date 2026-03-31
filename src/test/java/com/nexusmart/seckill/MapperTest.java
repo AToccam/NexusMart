@@ -2,6 +2,7 @@ package com.nexusmart.seckill;
 
 import com.nexusmart.seckill.entity.*;
 import com.nexusmart.seckill.mapper.*;
+import com.nexusmart.seckill.common.OrderStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -173,7 +174,7 @@ class MapperTest {
         order.setGoodsId(1L);
         order.setGoodsName("RTX 9090 Ti 赛博限量版");
         order.setOrderPrice(new BigDecimal("9999.00"));
-        order.setStatus(0);
+        order.setStatus(OrderStatus.QUEUING.getCode());
 
         int rows = orderInfoMapper.insert(order);
         System.out.println("======== 创建完整订单测试 ========");
@@ -199,17 +200,17 @@ class MapperTest {
         order.setGoodsId(1L);
         order.setGoodsName("RTX 9090 Ti 赛博限量版");
         order.setOrderPrice(new BigDecimal("9999.00"));
-        order.setStatus(0);
+        order.setStatus(OrderStatus.QUEUING.getCode());
         orderInfoMapper.insert(order);
 
-        // 模拟支付成功 0 -> 1
-        int rows = orderInfoMapper.updateStatus(order.getId(), 1);
+        // 模拟异步处理成功 0 -> 1
+        int rows = orderInfoMapper.updateStatus(order.getId(), OrderStatus.SUCCESS.getCode());
         System.out.println("======== 订单状态更新测试 ========");
         assertEquals(1, rows);
 
         OrderInfo updated = orderInfoMapper.selectById(order.getId());
-        assertEquals(1, updated.getStatus());
-        System.out.println("订单 " + order.getId() + " 状态更新为 1（已支付）✓");
+        assertEquals(OrderStatus.SUCCESS.getCode(), updated.getStatus());
+        System.out.println("订单 " + order.getId() + " 状态更新为 1（成功）✓");
     }
 
     // ==================== 6. SeckillOrderMapper 测试（防重复下单） ====================
@@ -224,7 +225,7 @@ class MapperTest {
         order.setGoodsId(1L);
         order.setGoodsName("RTX 9090 Ti 赛博限量版");
         order.setOrderPrice(new BigDecimal("9999.00"));
-        order.setStatus(0);
+        order.setStatus(OrderStatus.QUEUING.getCode());
         orderInfoMapper.insert(order);
 
         // 插入秒杀防重记录

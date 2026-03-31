@@ -2,11 +2,13 @@ package com.nexusmart.seckill.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nexusmart.seckill.common.OrderStatus;
 import com.nexusmart.seckill.config.datasource.WriteDataSource;
 import com.nexusmart.seckill.config.SeckillInitRunner;
 import com.nexusmart.seckill.entity.*;
 import com.nexusmart.seckill.mapper.*;
 import com.nexusmart.seckill.util.RedisCacheUtil;
+import com.nexusmart.seckill.util.SnowflakeIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,8 @@ public class SeckillService {
     private StringRedisTemplate redisTemplate;
     @Autowired
     private RedisCacheUtil cacheUtil;
+    @Autowired
+    private SnowflakeIdGenerator snowflakeIdGenerator;
 
     /**
      * 执行秒杀：扣库存 + 创建订单（事务保证原子性）
@@ -113,12 +117,13 @@ public class SeckillService {
 
             // 创建完整订单
             OrderInfo order = new OrderInfo();
+            order.setOrderNo(snowflakeIdGenerator.nextId());
             order.setUserId(userId);
             order.setMerchantId(goods.getMerchantId());
             order.setGoodsId(goods.getId());
             order.setGoodsName(goods.getGoodsName());
             order.setOrderPrice(cachedGoods.getSeckillPrice());
-            order.setStatus(0);
+            order.setStatus(OrderStatus.QUEUING.getCode());
             orderInfoMapper.insert(order);
 
             // 创建秒杀防重订单（唯一索引兜底，无需提前 SELECT 检查）

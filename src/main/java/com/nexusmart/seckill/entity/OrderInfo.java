@@ -10,8 +10,11 @@ import java.time.LocalDateTime;
 @Data
 public class OrderInfo {
 
-    /** 订单 ID（自增主键） */
+    /** 订单 ID（数据库自增主键） */
     private Long id;
+
+    /** 业务订单号（雪花 ID，全局唯一） */
+    private Long orderNo;
 
     /** 买家 ID */
     private Long userId;
@@ -28,7 +31,7 @@ public class OrderInfo {
     /** 实际成交价 */
     private BigDecimal orderPrice;
 
-    /** 订单状态：0-新建未支付  1-已支付  2-已发货  3-已退款 */
+    /** 订单状态：0-排队中 1-成功 2-失败 */
     private Integer status;
 
     /** 下单时间（由数据库 DEFAULT CURRENT_TIMESTAMP 自动填充） */

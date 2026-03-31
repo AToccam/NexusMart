@@ -15,13 +15,17 @@ public interface OrderInfoMapper {
     @Select("SELECT * FROM order_info WHERE id = #{id}")
     OrderInfo selectById(Long id);
 
+    /** 根据业务订单号查询订单 */
+    @Select("SELECT * FROM order_info WHERE order_no = #{orderNo}")
+    OrderInfo selectByOrderNo(Long orderNo);
+
     /** 根据用户 ID 查询该用户的所有订单 */
     @Select("SELECT * FROM order_info WHERE user_id = #{userId}")
     List<OrderInfo> selectByUserId(Long userId);
 
     /** 新增订单（自增 ID 回填到对象） */
-    @Insert("INSERT INTO order_info(user_id, merchant_id, goods_id, goods_name, order_price, status) " +
-            "VALUES(#{userId}, #{merchantId}, #{goodsId}, #{goodsName}, #{orderPrice}, #{status})")
+        @Insert("INSERT INTO order_info(order_no, user_id, merchant_id, goods_id, goods_name, order_price, status) " +
+            "VALUES(#{orderNo}, #{userId}, #{merchantId}, #{goodsId}, #{goodsName}, #{orderPrice}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OrderInfo orderInfo);
 

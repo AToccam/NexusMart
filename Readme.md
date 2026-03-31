@@ -72,12 +72,13 @@
 | 字段名 | 数据类型 | 约束 | 默认值 | 描述说明 |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | bigint(20) | PK, AUTO_INCREMENT | - | 订单流水号 |
+| `order_no` | bigint(20) | UNIQUE, NOT NULL | - | 业务订单号（雪花ID，全局唯一） |
 | `user_id` | bigint(20) | NOT NULL | - | 购买者ID |
 | `merchant_id` | bigint(20) | NOT NULL | - | 售卖者ID |
 | `goods_id` | bigint(20) | NOT NULL | - | 购买的商品ID |
 | `goods_name` | varchar(128) | NOT NULL | - | 商品名称快照（防后续商品改名） |
 | `order_price` | decimal(10,2) | - | 0.00 | 实际支付成交价 |
-| `status` | tinyint(4) | - | 0 | 订单状态：0未支付, 1已支付, 2已发货, 3已退款 |
+| `status` | tinyint(4) | - | 0 | 订单状态：0排队中, 1成功, 2失败 |
 | `create_time` | datetime | - | CURRENT_TIMESTAMP | 订单创建时间 |
 
 ### 4.2 秒杀订单防重表 (`seckill_order`)

@@ -50,6 +50,10 @@ mybatis:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 app:
+  id:
+    # 雪花 ID 节点配置：单机可保持默认，多实例部署时需确保不同节点不重复
+    worker-id: ${ID_WORKER:1}
+    datacenter-id: ${ID_DATACENTER:1}
   datasource:
     master:
       driver-class-name: com.mysql.cj.jdbc.Driver

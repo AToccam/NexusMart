@@ -169,8 +169,8 @@
             const result = await resp.json();
             if (result.code === 200) {
                 box.className = 'result-box success';
-                box.innerHTML = `✅ 秒杀成功！订单号：${result.data.id}，商品：${escapeHtml(result.data.goodsName)}，成交价：¥${result.data.orderPrice}`;
-                showToast('🎉 秒杀成功！订单号 #' + result.data.id, 'success');
+                box.innerHTML = `⏳ 已进入排队，业务订单号：${result.data.orderNo}，请求ID：${escapeHtml(result.data.requestId)}，请稍后在订单列表查看结果`;
+                showToast('请求已入队，订单号 #' + result.data.orderNo, 'success');
                 loadGoods(); // 刷新库存
             } else {
                 box.className = 'result-box error';

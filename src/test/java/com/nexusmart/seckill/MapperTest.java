@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,6 +28,10 @@ class MapperTest {
     @Autowired private SeckillGoodsMapper seckillGoodsMapper;
     @Autowired private OrderInfoMapper orderInfoMapper;
     @Autowired private SeckillOrderMapper seckillOrderMapper;
+
+    private long nextOrderNo() {
+        return System.currentTimeMillis() * 1000 + ThreadLocalRandom.current().nextInt(1000);
+    }
 
     // ==================== 1. UserInfoMapper 测试 ====================
 
@@ -169,6 +174,7 @@ class MapperTest {
     @Transactional
     void testInsertOrder() {
         OrderInfo order = new OrderInfo();
+        order.setOrderNo(nextOrderNo());
         order.setUserId(1001L);
         order.setMerchantId(1L);
         order.setGoodsId(1L);
@@ -195,6 +201,7 @@ class MapperTest {
     void testUpdateOrderStatus() {
         // 先插入一条订单
         OrderInfo order = new OrderInfo();
+        order.setOrderNo(nextOrderNo());
         order.setUserId(7777L);
         order.setMerchantId(1L);
         order.setGoodsId(1L);
@@ -220,6 +227,7 @@ class MapperTest {
     void testSeckillOrderInsertAndDuplicateCheck() {
         // 先创建一条完整订单
         OrderInfo order = new OrderInfo();
+        order.setOrderNo(nextOrderNo());
         order.setUserId(1001L);
         order.setMerchantId(1L);
         order.setGoodsId(1L);

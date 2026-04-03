@@ -11,6 +11,21 @@ server:
 spring:
   application:
     name: NexusMart-Seckill
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:nexusmart-seckill-order-group}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    listener:
+      ack-mode: record
   datasource:
     # MySQL 8.0 及以上的标准驱动类名
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -54,6 +69,27 @@ app:
     # 雪花 ID 节点配置：单机可保持默认，多实例部署时需确保不同节点不重复
     worker-id: ${ID_WORKER:1}
     datacenter-id: ${ID_DATACENTER:1}
+  kafka:
+    producer:
+      send-timeout-ms: 3000
+    topic:
+      partitions: 3
+      replicas: 1
+    topics:
+      order-create: ${KAFKA_TOPIC_ORDER_CREATE:seckill.order.create.v1}
+      order-create-dlt: ${KAFKA_TOPIC_ORDER_CREATE_DLT:seckill.order.create.v1.DLT}
+    consumer:
+      retry:
+        max-attempts: 3
+        backoff-ms: 1000
+  seckill:
+    pending-ttl-seconds: 600
+    result-ttl-seconds: 86400
+    idempotent-ttl-seconds: 604800
+    compensation:
+      timeout-ms: 120000
+      scan-interval-ms: 10000
+      batch-size: 200
   datasource:
     master:
       driver-class-name: com.mysql.cj.jdbc.Driver

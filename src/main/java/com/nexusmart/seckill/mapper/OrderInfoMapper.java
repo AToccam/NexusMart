@@ -24,13 +24,13 @@ public interface OrderInfoMapper {
     List<OrderInfo> selectByUserId(Long userId);
 
     /** 新增订单（自增 ID 回填到对象） */
-        @Insert("INSERT INTO order_info(order_no, user_id, merchant_id, goods_id, goods_name, order_price, status) " +
+    @Insert("INSERT INTO order_info(order_no, user_id, merchant_id, goods_id, goods_name, order_price, status) " +
             "VALUES(#{orderNo}, #{userId}, #{merchantId}, #{goodsId}, #{goodsName}, #{orderPrice}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OrderInfo orderInfo);
 
     /**
-     * 更新订单状态（0-未支付  1-已支付  2-已发货  3-已退款）
+     * 更新订单状态（0-排队中 1-成功 2-失败）
      */
     @Update("UPDATE order_info SET status = #{status} WHERE id = #{id}")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);

@@ -2,11 +2,13 @@ package com.nexusmart.seckill;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * NexusMart 秒杀系统核心启动类
  */
 @SpringBootApplication
+@EnableScheduling
 public class NexusMartApplication {
 
     public static void main(String[] args) {

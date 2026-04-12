@@ -1,7 +1,7 @@
 services:
   # ==================== MySQL Master ====================
   mysql-master:
-    image: mysql:8.0
+    image: mirror.gcr.io/library/mysql:8.0
     container_name: nexusmart-mysql-master
     restart: unless-stopped
     environment:
@@ -12,6 +12,7 @@ services:
       - "3307:3306"
     volumes:
       - mysql_master_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
@@ -30,7 +31,7 @@ services:
 
   # 为主库创建复制账号
   mysql-master-init:
-    image: mysql:8.0
+    image: mirror.gcr.io/library/mysql:8.0
     container_name: nexusmart-mysql-master-init
     depends_on:
       mysql-master:
@@ -54,7 +55,7 @@ services:
 
   # ==================== MySQL Slave (Read Replica) ====================
   mysql-slave:
-    image: mysql:8.0
+    image: mirror.gcr.io/library/mysql:8.0
     container_name: nexusmart-mysql-slave
     restart: unless-stopped
     environment:
@@ -87,7 +88,7 @@ services:
 
   # 自动在从库执行 CHANGE REPLICATION SOURCE TO + START REPLICA
   mysql-slave-init:
-    image: mysql:8.0
+    image: mirror.gcr.io/library/mysql:8.0
     container_name: nexusmart-mysql-slave-init
     depends_on:
       mysql-slave:
@@ -122,7 +123,7 @@ services:
 
   # ==================== Redis ====================
   redis:
-    image: redis:7-alpine
+    image: mirror.gcr.io/library/redis:7-alpine
     container_name: nexusmart-redis
     restart: unless-stopped
     ports:
@@ -137,6 +138,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ==================== Kafka (KRaft) ====================
+  kafka:
+    image: quay.io/strimzi/kafka:latest-kafka-3.7.0
+    container_name: nexusmart-kafka
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "9092:9092"
+    command: >
+      /bin/bash -ec "
+      mkdir -p /var/lib/kafka/data;
+      /opt/kafka/bin/kafka-storage.sh format --ignore-formatted -t MkU3OEVBNTcwNTJENDM2Qk -c /etc/kafka/kraft/server.properties;
+      exec /opt/kafka/bin/kafka-server-start.sh /etc/kafka/kraft/server.properties;
+      "
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+      - ./docker/kafka/server.properties:/etc/kafka/kraft/server.properties:ro
+    networks:
+      - nexusmart-net
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
 
   # ==================== Spring Boot App ====================
   app:
@@ -156,6 +183,8 @@ services:
       DB_PASSWORD: 123456
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_CONSUMER_GROUP: nexusmart-seckill-order-group
       JAVA_OPTS: "-Xms256m -Xmx512m"
     ports:
       - "8081:8081"
@@ -170,10 +199,12 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   # ==================== Nginx ====================
   nginx:
-    image: nginx:alpine
+    image: mirror.gcr.io/library/nginx:1.27-alpine
     container_name: nexusmart-nginx
     restart: unless-stopped
     ports:
@@ -184,7 +215,8 @@ services:
     networks:
       - nexusmart-net
     depends_on:
-      - app
+      app:
+        condition: service_healthy
 
 networks:
   nexusmart-net:
@@ -194,3 +226,4 @@ volumes:
   mysql_master_data:
   mysql_slave_data:
   redis_data:
+  kafka_data:

@@ -40,4 +40,10 @@ public interface SeckillGoodsMapper {
     @Update("UPDATE seckill_goods SET stock_count = stock_count - 1, version = version + 1 " +
             "WHERE id = #{id} AND stock_count > 0 AND version = #{version}")
     int decreaseStockByOptimisticLock(@Param("id") Long id, @Param("version") Integer version);
+
+        /**
+         * 重复冲突补偿：回补 1 个库存并推进版本号，保持热库存数据单调演进。
+         */
+        @Update("UPDATE seckill_goods SET stock_count = stock_count + 1, version = version + 1 WHERE id = #{id}")
+        int increaseStockByCompensation(@Param("id") Long id);
 }

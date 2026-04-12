@@ -70,6 +70,7 @@
         .status-1 { background: #f6ffed; color: #389e0d; }
         .status-2 { background: #e6f7ff; color: #096dd9; }
         .status-3 { background: #fff1f0; color: #cf1322; }
+        .status-4 { background: #fbeaea; color: #a8071a; }
     </style>
 </head>
 <body>
@@ -209,7 +210,7 @@
             if (result.code !== 200 || !result.data || result.data.length === 0) {
                 container.innerHTML = '<p class="empty-tip">暂无订单</p>'; return;
             }
-            const statusMap = { 0: '排队中', 1: '成功', 2: '失败' };
+            const statusMap = { 0: '排队中', 1: '下单成功', 2: '下单失败', 3: '已支付', 4: '支付失败' };
             container.innerHTML = result.data.map(o => `
                 <div class="order-card">
                     <div class="order-info">

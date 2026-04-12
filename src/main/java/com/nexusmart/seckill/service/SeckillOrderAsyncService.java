@@ -15,6 +15,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @Service
 public class SeckillOrderAsyncService {
 
@@ -83,20 +85,42 @@ public class SeckillOrderAsyncService {
             seckillOrderMapper.insert(seckillOrder);
             return order;
         } catch (DuplicateKeyException e) {
-            OrderInfo byOrderNo = orderInfoMapper.selectByOrderNo(message.getOrderNo());
-            if (byOrderNo != null) {
-                return byOrderNo;
-            }
-
-            SeckillOrder existedSeckillOrder = seckillOrderMapper
-                    .selectByUserIdAndGoodsId(message.getUserId(), goods.getId());
-            if (existedSeckillOrder != null) {
-                OrderInfo existedOrder = orderInfoMapper.selectById(existedSeckillOrder.getOrderId());
-                if (existedOrder != null) {
-                    return existedOrder;
-                }
+            OrderInfo existedOrder = findExistingOrderForDuplicate(message, goods.getId(), order.getId());
+            if (existedOrder != null) {
+                rollbackCurrentAttempt(current.getId(), order);
+                return existedOrder;
             }
             throw e;
+        }
+    }
+
+    private OrderInfo findExistingOrderForDuplicate(SeckillOrderMessage message,
+                                                    Long goodsId,
+                                                    Long currentOrderId) {
+        OrderInfo byOrderNo = orderInfoMapper.selectByOrderNo(message.getOrderNo());
+        if (byOrderNo != null && !Objects.equals(byOrderNo.getId(), currentOrderId)) {
+            return byOrderNo;
+        }
+
+        SeckillOrder existedSeckillOrder = seckillOrderMapper
+                .selectByUserIdAndGoodsId(message.getUserId(), goodsId);
+        if (existedSeckillOrder == null) {
+            return null;
+        }
+        return orderInfoMapper.selectById(existedSeckillOrder.getOrderId());
+    }
+
+    private void rollbackCurrentAttempt(Long seckillGoodsId, OrderInfo currentOrder) {
+        int recovered = seckillGoodsMapper.increaseStockByCompensation(seckillGoodsId);
+        if (recovered == 0) {
+            throw new RuntimeException("重复下单补偿失败：库存回补失败");
+        }
+
+        if (currentOrder.getId() != null) {
+            int deleted = orderInfoMapper.deleteById(currentOrder.getId());
+            if (deleted == 0) {
+                throw new RuntimeException("重复下单补偿失败：脏订单清理失败");
+            }
         }
     }
 }

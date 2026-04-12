@@ -6,8 +6,10 @@ package com.nexusmart.seckill.common;
 public enum OrderStatus {
 
     QUEUING(0, "排队中"),
-    SUCCESS(1, "成功"),
-    FAILED(2, "失败");
+    SUCCESS(1, "下单成功"),
+    FAILED(2, "下单失败"),
+    PAID(3, "已支付"),
+    PAY_FAILED(4, "支付失败");
 
     private final int code;
     private final String desc;

@@ -78,6 +78,8 @@ app:
     topics:
       order-create: ${KAFKA_TOPIC_ORDER_CREATE:seckill.order.create.v1}
       order-create-dlt: ${KAFKA_TOPIC_ORDER_CREATE_DLT:seckill.order.create.v1.DLT}
+      payment-result: ${KAFKA_TOPIC_PAYMENT_RESULT:seckill.payment.result.v1}
+      payment-result-dlt: ${KAFKA_TOPIC_PAYMENT_RESULT_DLT:seckill.payment.result.v1.DLT}
     consumer:
       retry:
         max-attempts: 3
@@ -86,6 +88,9 @@ app:
     pending-ttl-seconds: 600
     result-ttl-seconds: 86400
     idempotent-ttl-seconds: 604800
+    message:
+      # 保障下单+库存在跨服务消息中的重试窗口
+      reserve-timeout-ms: 15000
     compensation:
       timeout-ms: 120000
       scan-interval-ms: 10000

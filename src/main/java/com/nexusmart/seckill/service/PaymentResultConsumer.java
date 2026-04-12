@@ -62,6 +62,12 @@ public class PaymentResultConsumer {
                 return;
             }
 
+            // Reload latest status on conditional-update miss to avoid stale-snapshot decisions.
+            order = orderInfoMapper.selectByOrderNo(message.getOrderNo());
+            if (order == null) {
+                throw new RuntimeException("订单不存在，等待重试");
+            }
+
             if (order.getStatus() == targetStatus) {
                 paymentEventConsistencyService.markDone(eventId, "SKIPPED_ALREADY_TARGET_STATUS");
                 return;

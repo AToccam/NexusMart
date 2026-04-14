@@ -2,12 +2,14 @@ package com.nexusmart.seckill;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * NexusMart 秒杀系统核心启动类
  */
 @SpringBootApplication
+@EnableDiscoveryClient
 @EnableScheduling
 public class NexusMartApplication {
 

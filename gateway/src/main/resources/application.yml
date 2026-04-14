@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: nexusmart-gateway
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+  cloud:
+    nacos:
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+      config:
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        refresh-enabled: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: seckill-api
+          uri: lb://nexusmart-seckill
+          predicates:
+            - Path=/api/seckill/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${gateway.rate-limit.replenish-rate:30}
+                redis-rate-limiter.burstCapacity: ${gateway.rate-limit.burst-capacity:60}
+                key-resolver: "#{@ipOrUserKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: seckillCircuit
+                fallbackUri: forward:/fallback/seckill
+        - id: goods-api
+          uri: lb://nexusmart-seckill
+          predicates:
+            - Path=/api/goods/**
+        - id: user-api
+          uri: lb://nexusmart-seckill
+          predicates:
+            - Path=/api/user/**
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+
+resilience4j:
+  timelimiter:
+    instances:
+      seckillCircuit:
+        timeout-duration: ${gateway.circuit-breaker.timeout-duration:1200ms}
+  circuitbreaker:
+    instances:
+      seckillCircuit:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: ${gateway.circuit-breaker.failure-rate-threshold:50}
+        slow-call-duration-threshold: ${gateway.circuit-breaker.slow-call-duration-threshold:1000ms}
+        slow-call-rate-threshold: ${gateway.circuit-breaker.slow-call-rate-threshold:50}
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+        automatic-transition-from-open-to-half-open-enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always

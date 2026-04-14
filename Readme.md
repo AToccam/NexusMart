@@ -92,3 +92,138 @@
 | `goods_id` | bigint(20) | NOT NULL | - | 秒杀商品ID |
 
 > **安全核心机制**：本表强制设定了 `UNIQUE KEY u_uid_gid (user_id, goods_id)`。当并发请求穿透上层锁到达数据库时，底层只会允许唯一一条记录插入成功，其余抛出 `DuplicateKeyException`，从而确保一人一单。
+
+---
+
+## 5. Docker 一键部署指南
+
+本项目已提供可直接运行的 Docker 部署编排，包含以下组件：
+
+- MySQL 主库（3307）
+- MySQL 从库（3308）
+- Redis（6379）
+- Kafka（KRaft，9092）
+- Nacos（8848）
+- Spring Boot 应用（8081）
+- Spring Cloud Gateway（8080）
+- Nginx 网关（80）
+
+### 5.1 环境要求
+
+- Docker 24+（推荐）
+- Docker Compose v2+
+
+可执行以下命令检查：
+
+```bash
+docker --version
+docker compose version
+```
+
+### 5.2 首次部署（推荐）
+
+在项目根目录执行：
+
+```bash
+docker compose up -d --build
+```
+
+说明：
+
+- 应用镜像会自动进行 Maven 多阶段构建。
+- MySQL 主库会自动执行 `docker/mysql/init/001_schema.sql` 初始化表结构与演示数据。
+
+### 5.3 查看服务状态
+
+```bash
+docker compose ps
+```
+
+健康检查验证：
+
+```bash
+curl http://127.0.0.1:8848/nacos/index.html
+curl http://127.0.0.1:8080/actuator/health
+curl http://127.0.0.1:8081/actuator/health
+curl http://127.0.0.1/api/goods/seckill/list
+```
+
+### 5.4 访问入口
+
+- 前端入口：http://127.0.0.1
+- 网关入口：http://127.0.0.1:8080
+- 后端直连：http://127.0.0.1:8081
+
+Nacos 注册发现、动态配置、熔断/限流/降级与 JMeter 压测说明详见：
+
+- `README_NACOS_GATEWAY_GOVERNANCE.md`
+
+### 5.5 常用运维命令
+
+查看日志：
+
+```bash
+docker compose logs -f app
+docker compose logs -f kafka
+docker compose logs -f mysql-master
+```
+
+重启某个服务：
+
+```bash
+docker compose restart app
+```
+
+停止但保留数据卷：
+
+```bash
+docker compose down
+```
+
+彻底重置（删除容器+网络+数据卷）：
+
+```bash
+docker compose down -v
+```
+
+### 5.6 数据初始化补救（仅历史数据卷场景）
+
+如果你之前已经运行过旧版本容器，且数据库里没有核心表，可手动执行一次：
+
+```bash
+docker exec -i nexusmart-mysql-master mysql -uroot -p123456 nexusmart < docker/mysql/init/001_schema.sql
+docker exec nexusmart-redis redis-cli FLUSHALL
+```
+
+然后重启应用：
+
+```bash
+docker compose up -d app nginx
+```
+
+### 5.7 快速联调示例
+
+发起秒杀请求：
+
+```bash
+curl -X POST "http://127.0.0.1/api/seckill/do?userId=1&seckillId=1"
+```
+
+查询用户订单：
+
+```bash
+curl "http://127.0.0.1/api/seckill/orders?userId=1"
+```
+
+### 5.8 配置说明
+
+- 主要编排文件：`docker-compose.yml`
+- 应用镜像构建文件：`Dockerfile`
+- Kafka KRaft 配置：`docker/kafka/server.properties`
+- MySQL 初始化脚本：`docker/mysql/init/001_schema.sql`
+
+如需调整数据库密码、端口、JVM 参数、Kafka 地址等，可修改 `docker-compose.yml` 中对应环境变量后重新执行：
+
+```bash
+docker compose up -d --build
+```

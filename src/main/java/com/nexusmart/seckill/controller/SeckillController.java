@@ -8,13 +8,20 @@ import com.nexusmart.seckill.service.PaymentResultProducer;
 import com.nexusmart.seckill.service.SeckillService;
 import com.nexusmart.seckill.vo.SeckillSubmitResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/seckill")
+@RefreshScope
 public class SeckillController {
 
     @Autowired
@@ -25,6 +32,15 @@ public class SeckillController {
 
     @Autowired
     private PaymentResultProducer paymentResultProducer;
+
+    @Value("${nexusmart.dynamic.message:hello-from-local-config}")
+    private String dynamicMessage;
+
+    @Value("${nexusmart.pressure.simulate-latency-ms:0}")
+    private long simulateLatencyMs;
+
+    @Value("${nexusmart.pressure.failure-rate:0}")
+    private double failureRate;
 
     /**
      * 执行秒杀
@@ -89,5 +105,43 @@ public class SeckillController {
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    /** 查看当前动态配置值，便于验证 Nacos 刷新生效 */
+    @GetMapping("/config/current")
+    public Result<Map<String, Object>> currentConfig() {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("dynamicMessage", dynamicMessage);
+        payload.put("simulateLatencyMs", simulateLatencyMs);
+        payload.put("failureRate", failureRate);
+        return Result.success(payload);
+    }
+
+    /**
+     * 压测演示接口：可按配置模拟慢调用与失败，供网关熔断/限流/降级测试使用。
+     */
+    @GetMapping("/pressure/ping")
+    public Result<String> pressurePing(@RequestParam(required = false, defaultValue = "false") boolean forceFail) {
+        if (simulateLatencyMs > 0) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(simulateLatencyMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return Result.error("请求被中断");
+            }
+        }
+
+        if (forceFail || shouldFailByRatio()) {
+            throw new RuntimeException("模拟服务异常，用于验证熔断与降级");
+        }
+        return Result.success("pong: " + dynamicMessage + " @" + System.currentTimeMillis());
+    }
+
+    private boolean shouldFailByRatio() {
+        double normalized = Math.max(0, Math.min(100, failureRate));
+        if (normalized <= 0) {
+            return false;
+        }
+        return ThreadLocalRandom.current().nextDouble(100) < normalized;
     }
 }

@@ -10,7 +10,26 @@ server:
 
 spring:
   application:
-    name: NexusMart-Seckill
+    name: nexusmart-seckill
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+  cloud:
+    nacos:
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        service: ${NACOS_SERVICE_NAME:${spring.application.name}}
+      config:
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        refresh-enabled: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
     producer:
@@ -116,3 +135,19 @@ app:
       connection-timeout: 10000
       idle-timeout: 300000
       max-lifetime: 600000
+
+nexusmart:
+  dynamic:
+    message: ${NEXUSMART_DYNAMIC_MESSAGE:hello-from-local-config}
+  pressure:
+    simulate-latency-ms: ${NEXUSMART_PRESSURE_LATENCY_MS:0}
+    failure-rate: ${NEXUSMART_PRESSURE_FAILURE_RATE:0}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always

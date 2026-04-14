@@ -1,0 +1,6 @@
+nexusmart:
+  dynamic:
+    message: "hello-from-nacos-v1"
+  pressure:
+    simulate-latency-ms: 0
+    failure-rate: 0

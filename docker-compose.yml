@@ -165,6 +165,30 @@ services:
       retries: 10
       start_period: 20s
 
+  # ==================== Nacos ====================
+  nacos:
+    image: docker.m.daocloud.io/nacos/nacos-server:v2.4.0
+    container_name: nexusmart-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 256m
+      JVM_XMN: 128m
+      TZ: Asia/Shanghai
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - nexusmart-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -Y off -q -O /dev/null http://localhost:8848/nacos/index.html"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
   # ==================== Spring Boot App ====================
   app:
     build:
@@ -185,6 +209,10 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_CONSUMER_GROUP: nexusmart-seckill-order-group
+      NACOS_SERVER_ADDR: nacos:8848
+      NACOS_NAMESPACE: ""
+      NACOS_GROUP: DEFAULT_GROUP
+      NACOS_SERVICE_NAME: nexusmart-seckill
       JAVA_OPTS: "-Xms256m -Xmx512m"
     ports:
       - "8081:8081"
@@ -201,6 +229,34 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  # ==================== Spring Cloud Gateway ====================
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: nexusmart-gateway
+    restart: unless-stopped
+    environment:
+      NACOS_SERVER_ADDR: nacos:8848
+      NACOS_NAMESPACE: ""
+      NACOS_GROUP: DEFAULT_GROUP
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    ports:
+      - "8080:8080"
+    networks:
+      - nexusmart-net
+    depends_on:
+      nacos:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   # ==================== Nginx ====================
   nginx:
@@ -215,7 +271,7 @@ services:
     networks:
       - nexusmart-net
     depends_on:
-      app:
+      gateway:
         condition: service_healthy
 
 networks:

@@ -1,0 +1,9 @@
+gateway:
+  rate-limit:
+    replenish-rate: 30
+    burst-capacity: 60
+  circuit-breaker:
+    timeout-duration: 1200ms
+    failure-rate-threshold: 50
+    slow-call-duration-threshold: 1000ms
+    slow-call-rate-threshold: 50

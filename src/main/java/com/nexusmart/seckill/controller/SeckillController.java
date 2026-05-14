@@ -39,6 +39,7 @@ public class SeckillController {
     @Value("${nexusmart.pressure.simulate-latency-ms:0}")
     private long simulateLatencyMs;
 
+    /** 失败率：0~1 之间的比例（如 0.3 = 30% 失败），值会被夹紧到 [0,1] */
     @Value("${nexusmart.pressure.failure-rate:0}")
     private double failureRate;
 
@@ -138,10 +139,11 @@ public class SeckillController {
     }
 
     private boolean shouldFailByRatio() {
-        double normalized = Math.max(0, Math.min(100, failureRate));
+        // failureRate 语义为 0~1 的比例（如 0.3 = 30% 失败概率）
+        double normalized = Math.max(0, Math.min(1, failureRate));
         if (normalized <= 0) {
             return false;
         }
-        return ThreadLocalRandom.current().nextDouble(100) < normalized;
+        return ThreadLocalRandom.current().nextDouble() < normalized;
     }
 }

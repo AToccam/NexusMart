@@ -2,5 +2,7 @@ nexusmart:
   dynamic:
     message: "hello-from-nacos-v1"
   pressure:
+    # 模拟接口响应延迟（毫秒）
     simulate-latency-ms: 0
+    # 模拟接口失败概率：0~1 的比例（如 0.3 = 30%）
     failure-rate: 0

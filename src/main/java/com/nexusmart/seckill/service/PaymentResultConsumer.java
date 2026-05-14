@@ -52,22 +52,21 @@ public class PaymentResultConsumer {
                 throw new RuntimeException("订单不存在，等待重试");
             }
 
-            int targetStatus = Boolean.TRUE.equals(message.getPaid())
-                    ? OrderStatus.PAID.getCode()
-                    : OrderStatus.PAY_FAILED.getCode();
-
             int updated = tryUpdateStatusByPaymentResult(message);
             if (updated > 0) {
                 paymentEventConsistencyService.markDone(eventId, "UPDATED");
                 return;
             }
 
-            // Reload latest status on conditional-update miss to avoid stale-snapshot decisions.
+            // 条件更新未命中：可能订单状态已被其他流程推进，重新读取最新状态再决策
             order = orderInfoMapper.selectByOrderNo(message.getOrderNo());
             if (order == null) {
                 throw new RuntimeException("订单不存在，等待重试");
             }
 
+            int targetStatus = Boolean.TRUE.equals(message.getPaid())
+                    ? OrderStatus.PAID.getCode()
+                    : OrderStatus.PAY_FAILED.getCode();
             if (order.getStatus() == targetStatus) {
                 paymentEventConsistencyService.markDone(eventId, "SKIPPED_ALREADY_TARGET_STATUS");
                 return;

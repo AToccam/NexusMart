@@ -103,6 +103,21 @@ app:
       retry:
         max-attempts: 3
         backoff-ms: 1000
+  cache:
+    # 空对象 TTL（秒）— 防穿透：DB 查不到时缓存空值的存活时间
+    empty-ttl-seconds: 300
+    # 互斥锁 TTL（秒）— 防击穿：缓存重建锁的自动过期
+    lock-ttl-seconds: 10
+    local:
+      # Caffeine L1 缓存最大条目数
+      maximum-size: 10000
+      # Caffeine 写入后过期时间（秒）— 故意远小于 Redis TTL，避免本地长期陈旧
+      expire-seconds: 60
+  bloom:
+    # 预期容量（用于布隆过滤器位数组大小估算）
+    expected-insertions: 100000
+    # 期望误判率
+    fpp: 0.01
   seckill:
     pending-ttl-seconds: 600
     result-ttl-seconds: 86400
@@ -140,7 +155,9 @@ nexusmart:
   dynamic:
     message: ${NEXUSMART_DYNAMIC_MESSAGE:hello-from-local-config}
   pressure:
+    # 模拟接口响应延迟（毫秒）
     simulate-latency-ms: ${NEXUSMART_PRESSURE_LATENCY_MS:0}
+    # 模拟接口失败概率：0~1 的比例（0.3 = 30%）。会被夹紧到 [0,1]
     failure-rate: ${NEXUSMART_PRESSURE_FAILURE_RATE:0}
 
 management:

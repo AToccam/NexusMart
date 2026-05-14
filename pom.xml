@@ -135,6 +135,20 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
+        <!-- Caffeine: 进程内 L1 本地缓存（Redis 之上再叠一层）-->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
+        <!-- Guava: 提供 BloomFilter（防缓存穿透）-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.3.1-jre</version>
+        </dependency>
+
         <!-- Test starter (managed by parent) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

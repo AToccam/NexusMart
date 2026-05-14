@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nexusmart.seckill.entity.SeckillGoods;
 import com.nexusmart.seckill.mapper.SeckillGoodsMapper;
+import com.nexusmart.seckill.service.BloomFilterService;
 import com.nexusmart.seckill.service.GoodsService;
 import com.nexusmart.seckill.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +40,14 @@ public class SeckillInitRunner implements ApplicationRunner {
     @Autowired
     private GoodsService goodsService;
 
+    @Autowired
+    private BloomFilterService bloomFilterService;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        // 1. 先构建布隆过滤器，后续缓存预热及业务查询可立刻享受到穿透防护
+        bloomFilterService.rebuild();
+
         List<SeckillGoods> list = seckillGoodsMapper.selectOngoing();
         for (SeckillGoods sg : list) {
             // 预热库存

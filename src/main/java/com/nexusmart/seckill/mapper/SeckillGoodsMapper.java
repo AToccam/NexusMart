@@ -28,6 +28,10 @@ public interface SeckillGoodsMapper {
     @Select("SELECT * FROM seckill_goods WHERE start_time <= NOW() AND end_time >= NOW()")
     List<SeckillGoods> selectOngoing();
 
+    /** 仅查询全部秒杀商品 ID，用于布隆过滤器初始化 */
+    @Select("SELECT id FROM seckill_goods")
+    List<Long> selectAllIds();
+
     /** 新增秒杀商品配置 */
     @Insert("INSERT INTO seckill_goods(goods_id, seckill_price, stock_count, start_time, end_time, version) " +
             "VALUES(#{goodsId}, #{seckillPrice}, #{stockCount}, #{startTime}, #{endTime}, #{version})")

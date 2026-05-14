@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path 'e:\\\\Projects\\\\分布式\\\\NexusMart' -Force | Where-Object { $_.Name -notmatch '^\\\\.\\(git|idea|vscode\\)$' } | Select-Object Name, Mode)",
+      "Bash(git -C 'e:/Projects/分布式/NexusMart' status)",
+      "Bash(git -C 'e:/Projects/分布式/NexusMart' log --oneline -20)",
+      "Bash(./mvnw -q -DskipTests compile)",
+      "Bash(command -v mvn)",
+      "Bash(command -v mvnw)",
+      "Bash(mvn -v)",
+      "Bash(mvn -q -DskipTests compile)"
+    ]
+  }
+}

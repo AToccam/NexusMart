@@ -39,6 +39,9 @@ public class GoodsService {
     @Autowired
     private RedisCacheUtil cacheUtil;
 
+    @Autowired
+    private BloomFilterService bloomFilterService;
+
     /**
      * 查询正在进行的秒杀商品列表（优先走 Redis 缓存，防击穿/穿透/雪崩）
      */
@@ -61,8 +64,18 @@ public class GoodsService {
 
     /**
      * 查询商品详情（优先走 Redis 缓存，防击穿/穿透/雪崩）
+     * <p>
+     * 穿透防护链：BloomFilter → L1(Caffeine) → L2(Redis) → DB(空值兜底)
      */
     public SeckillGoodsVo getGoodsDetail(Long goodsId) {
+        if (goodsId == null) {
+            return null;
+        }
+        // 布隆过滤器前置拦截：完全不存在的 goodsId 直接返回，不下穿到 Redis/DB
+        if (!bloomFilterService.mightContainGoodsId(goodsId)) {
+            return null;
+        }
+
         String key = GOODS_DETAIL_KEY_PREFIX + goodsId;
         String lockName = GOODS_DETAIL_LOCK_PREFIX + goodsId;
 

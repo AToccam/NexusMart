@@ -19,6 +19,10 @@ public interface GoodsMapper {
     @Select("SELECT * FROM goods")
     List<Goods> selectAll();
 
+    /** 仅查询全部商品 ID，用于布隆过滤器初始化 */
+    @Select("SELECT id FROM goods")
+    List<Long> selectAllIds();
+
     /** 根据商家 ID 查询其名下所有商品 */
     @Select("SELECT * FROM goods WHERE merchant_id = #{merchantId}")
     List<Goods> selectByMerchantId(Long merchantId);

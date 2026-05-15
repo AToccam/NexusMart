@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS goods (
   goods_img VARCHAR(256) DEFAULT NULL,
   goods_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   goods_stock INT NOT NULL DEFAULT 0,
+  description VARCHAR(1024) DEFAULT NULL COMMENT '商品描述，参与 ES multi_match 全文检索',
   KEY idx_goods_merchant (merchant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -62,9 +63,11 @@ INSERT INTO merchant_info (id, shop_name, status)
 VALUES (1, 'NexusMart Official', 1)
 ON DUPLICATE KEY UPDATE shop_name = VALUES(shop_name), status = VALUES(status);
 
-INSERT INTO goods (id, merchant_id, goods_name, goods_img, goods_price, goods_stock)
-VALUES (1, 1, 'NexusMart Demo Goods', '/images/demo-goods.png', 199.00, 1000)
-ON DUPLICATE KEY UPDATE goods_name = VALUES(goods_name), goods_price = VALUES(goods_price), goods_stock = VALUES(goods_stock);
+INSERT INTO goods (id, merchant_id, goods_name, goods_img, goods_price, goods_stock, description)
+VALUES (1, 1, 'NexusMart Demo Goods', '/images/demo-goods.png', 199.00, 1000,
+        'NexusMart 演示商品，用于验证全文搜索 multi_match 多字段检索能力。')
+ON DUPLICATE KEY UPDATE goods_name = VALUES(goods_name), goods_price = VALUES(goods_price),
+                        goods_stock = VALUES(goods_stock), description = VALUES(description);
 
 INSERT INTO seckill_goods (id, goods_id, seckill_price, stock_count, start_time, end_time, version)
 VALUES (1, 1, 99.00, 100, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), 0)

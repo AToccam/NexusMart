@@ -165,6 +165,29 @@ services:
       retries: 10
       start_period: 20s
 
+  # ==================== Elasticsearch (单节点,商品搜索) ====================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: nexusmart-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      TZ: Asia/Shanghai
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - nexusmart-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health | grep -E 'green|yellow' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
   # ==================== Nacos ====================
   nacos:
     image: docker.m.daocloud.io/nacos/nacos-server:v2.4.0
@@ -209,6 +232,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_CONSUMER_GROUP: nexusmart-seckill-order-group
+      ES_URIS: http://elasticsearch:9200
       NACOS_SERVER_ADDR: nacos:8848
       NACOS_NAMESPACE: ""
       NACOS_GROUP: DEFAULT_GROUP
@@ -230,6 +254,8 @@ services:
       kafka:
         condition: service_healthy
       nacos:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
 
   # ==================== Spring Cloud Gateway ====================
@@ -283,3 +309,4 @@ volumes:
   mysql_slave_data:
   redis_data:
   kafka_data:
+  es_data:

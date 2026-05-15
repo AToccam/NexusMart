@@ -1,0 +1,63 @@
+######################################################################
+# ShardingSphere-JDBC 分库分表规则（profile=sharding 时启用）
+#
+# 数据源：
+#   ds0 / ds1 两个物理库（演示场景下放同一个 MySQL 实例的两个 schema）
+# 分片策略：
+#   分库：按 user_id % 2  → ds0 / ds1
+#   分表：按 order_id % 4 → order_archive_0 / _1 / _2 / _3（每库 4 张）
+# 主键生成：
+#   ShardingSphere 内置 SNOWFLAKE，worker-id 通过参数 worker-id 指定，
+#   多实例部署时必须显式区分，避免全局 ID 冲突。
+######################################################################
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://${DB_MASTER_HOST:127.0.0.1}:${DB_MASTER_PORT:3307}/nexusmart_ds0?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:123456}
+    maximumPoolSize: 30
+    minimumIdle: 5
+  ds1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://${DB_MASTER_HOST:127.0.0.1}:${DB_MASTER_PORT:3307}/nexusmart_ds1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:123456}
+    maximumPoolSize: 30
+    minimumIdle: 5
+
+rules:
+  - !SHARDING
+    tables:
+      order_archive:
+        actualDataNodes: ds${0..1}.order_archive_${0..3}
+        databaseStrategy:
+          standard:
+            shardingColumn: user_id
+            shardingAlgorithmName: db_inline_mod2
+        tableStrategy:
+          standard:
+            shardingColumn: order_id
+            shardingAlgorithmName: tbl_inline_mod4
+        keyGenerateStrategy:
+          column: order_id
+          keyGeneratorName: snowflake
+    shardingAlgorithms:
+      db_inline_mod2:
+        type: INLINE
+        props:
+          algorithm-expression: ds${user_id % 2}
+      tbl_inline_mod4:
+        type: INLINE
+        props:
+          algorithm-expression: order_archive_${order_id % 4}
+    keyGenerators:
+      snowflake:
+        type: SNOWFLAKE
+        props:
+          worker-id: ${SHARDING_WORKER_ID:1}
+
+props:
+  sql-show: true

@@ -30,6 +30,16 @@ spring:
         group: ${NACOS_GROUP:DEFAULT_GROUP}
         file-extension: yml
         refresh-enabled: true
+    sentinel:
+      # Sentinel 控制台地址（可选，本地不部署 dashboard 时留空）
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:}
+        port: ${SENTINEL_TRANSPORT_PORT:8719}
+      # 关键开关：饿加载，启动即注册所有资源，避免第一次访问才埋点
+      eager: true
+      # 让 Sentinel 也介入 RestTemplate / WebClient 等出向调用（按需打开）
+      filter:
+        enabled: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
     producer:
@@ -72,6 +82,10 @@ spring:
           max-idle: 50      # 最大空闲连接数
           min-idle: 10      # 最小空闲连接数
           max-wait: 5000ms  # 获取连接最大等待时间
+    elasticsearch:
+      uris: ${ES_URIS:http://127.0.0.1:9200}
+      connection-timeout: 3s
+      socket-timeout: 30s
 
 # MyBatis 配置
 mybatis:
@@ -118,6 +132,15 @@ app:
     expected-insertions: 100000
     # 期望误判率
     fpp: 0.01
+  sentinel:
+    # 流控规则（每个资源的 QPS 阈值）
+    flow:
+      product-detail-qps: 100
+      product-search-qps: 50
+    # 熔断规则（异常比例 + 熔断窗口）
+    degrade:
+      product-search-error-ratio: 0.5
+      product-search-window-seconds: 10
   seckill:
     pending-ttl-seconds: 600
     result-ttl-seconds: 86400

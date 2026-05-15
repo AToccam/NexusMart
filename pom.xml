@@ -149,6 +149,32 @@
             <version>33.3.1-jre</version>
         </dependency>
 
+        <!-- Elasticsearch: Spring Data ES（商品全文搜索）-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
+
+        <!-- Sentinel: 应用层限流 / 熔断 / 降级 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+
+        <!-- ShardingSphere-JDBC: 订单分库分表（profile=sharding 时启用）-->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-jdbc-core</artifactId>
+            <version>5.4.1</version>
+            <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <!-- Test starter (managed by parent) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

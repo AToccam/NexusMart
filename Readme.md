@@ -57,7 +57,8 @@ NexusMart 是一个面向**高并发秒杀场景**的全栈电商系统实战项
 | 支付一致性 | 基于 `eventId` 的幂等消费 + 状态机条件更新,严防非法状态跳转 |
 | 读写分离 | AOP + `AbstractRoutingDataSource`,按方法名 / 注解切换主从 |
 | 服务治理 | Nacos 服务发现 + 动态配置 + `@RefreshScope` 热刷新 |
-| 流量治理 | Spring Cloud Gateway + Redis 令牌桶限流 + Resilience4j 熔断降级 |
+| 流量治理 | Spring Cloud Gateway + Redis 令牌桶限流 + **Sentinel** QPS 限流 / 异常比例熔断(`@SentinelResource`)+ Resilience4j 网关级熔断 |
+| 全文搜索 | Elasticsearch 8.x + `multi_match` + 启动期全量灌入 + 业务写路径双写 |
 
 ## 技术栈
 
@@ -258,6 +259,7 @@ NexusMart/
 | `goods_img` | varchar(256) | - | 主图 URL |
 | `goods_price` | decimal(10,2) | DEFAULT 0 | 日常价 |
 | `goods_stock` | int | DEFAULT 0 | 日常库存 |
+| `description` | varchar(1024) | - | 商品描述,参与 ES `multi_match` 多字段检索 |
 
 ### 秒杀商品表 `seckill_goods` — 热数据
 
@@ -301,6 +303,10 @@ NexusMart/
 |------|------|------|
 | GET | `/api/goods/seckill/list` | 当前正在进行的秒杀商品列表(走 L1+L2 缓存) |
 | GET | `/api/goods/detail?goodsId=` | 商品详情(BloomFilter → L1 → L2 → DB) |
+| POST | `/api/goods` | 新增商品(MySQL + ES 双写,演示用) |
+| PUT | `/api/goods/{id}` | 更新商品(MySQL + ES 双写 + 失效详情缓存) |
+| DELETE | `/api/goods/{id}` | 下架商品(删 MySQL + ES + 失效缓存) |
+| GET | `/api/products/search?keyword=&page=&size=` | 商品全文搜索(`multi_match`,Sentinel 异常熔断) |
 | POST | `/api/seckill/do?userId=&seckillId=` | 提交秒杀(异步返回排队结果) |
 | GET | `/api/seckill/orders?userId=` | 查询用户订单列表 |
 | GET | `/api/seckill/order/no?orderNo=` | 按业务订单号查订单 |
@@ -431,16 +437,16 @@ docker exec -it nexusmart-kafka /opt/kafka/bin/kafka-topics.sh \
 
 ## 路线图
 
-- [x] Module 1 — Docker 部署 + Nginx 反向代理
+- [x] Module 1 — Docker 部署 + Nginx 反向代理(单 `app` 实例 + Nacos 负载均衡)
 - [x] Module 2 — 动静分离 + 静态资源强缓存
 - [x] Module 3 — Redis 缓存(BloomFilter + Caffeine L1 + 互斥锁 + 随机 TTL)
-- [x] Module 4 — MySQL 一主一从读写分离
-- [ ] Module 5 — Elasticsearch 商品全文搜索
+- [x] Module 4 — MySQL 一主一从读写分离(自研 AOP + `AbstractRoutingDataSource`,等价于 ShardingSphere 读写分离规则)
+- [x] Module 5 — Elasticsearch 商品全文搜索(`standard` 分词器,生产化需安装 IK 插件)
 - [x] Module 6 — Kafka 异步秒杀 + 雪花 ID + 死信补偿
-- [ ] Module 7 — ShardingSphere 订单分库分表
+- [x] Module 7 — ShardingSphere 订单分库分表(演示 profile `sharding`,仅作用于 `order_archive` 归档表)
 - [x] Module 8 — 支付一致性(eventId 幂等 + 状态机)
 - [x] Module 9 — Nacos 服务发现 + 动态配置 + Spring Cloud Gateway
-- [ ] Module 10 — Sentinel 限流 / 熔断 / 降级(当前由 Resilience4j 承担)
+- [x] Module 10 — Sentinel 限流 / 熔断 / 降级(规则在 `SentinelRuleConfig` 启动期硬编码,生产化建议接 Dashboard 或 Nacos 数据源)
 
 ## 许可证
 

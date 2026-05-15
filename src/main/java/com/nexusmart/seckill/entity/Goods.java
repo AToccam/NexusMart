@@ -26,4 +26,7 @@ public class Goods {
 
     /** 日常库存 */
     private Integer goodsStock;
+
+    /** 商品描述，参与 ES multi_match 多字段检索（name^3, description）。可为空。 */
+    private String description;
 }

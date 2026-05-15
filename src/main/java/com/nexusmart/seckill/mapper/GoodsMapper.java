@@ -28,13 +28,18 @@ public interface GoodsMapper {
     List<Goods> selectByMerchantId(Long merchantId);
 
     /** 新增商品（自增 ID 会通过 useGeneratedKeys 回填到对象） */
-    @Insert("INSERT INTO goods(merchant_id, goods_name, goods_img, goods_price, goods_stock) " +
-            "VALUES(#{merchantId}, #{goodsName}, #{goodsImg}, #{goodsPrice}, #{goodsStock})")
+    @Insert("INSERT INTO goods(merchant_id, goods_name, goods_img, goods_price, goods_stock, description) " +
+            "VALUES(#{merchantId}, #{goodsName}, #{goodsImg}, #{goodsPrice}, #{goodsStock}, #{description})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Goods goods);
 
     /** 更新商品信息 */
     @Update("UPDATE goods SET goods_name = #{goodsName}, goods_img = #{goodsImg}, " +
-            "goods_price = #{goodsPrice}, goods_stock = #{goodsStock} WHERE id = #{id}")
+            "goods_price = #{goodsPrice}, goods_stock = #{goodsStock}, description = #{description} " +
+            "WHERE id = #{id}")
     int update(Goods goods);
+
+    /** 根据 ID 物理删除商品（演示用：实际生产建议加 `deleted` 软删字段） */
+    @Delete("DELETE FROM goods WHERE id = #{id}")
+    int deleteById(Long id);
 }
